@@ -8,8 +8,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
 
 public class Util {
+	
+
+	public static final Double totFiles = 98998.0;
   public static Map<Query,List<Document>> loadTrainData (String feature_file_name) throws Exception {
     Map<Query, List<Document>> result = new HashMap<Query, List<Document>>();
 
@@ -133,6 +138,114 @@ public class Util {
     
     return result;
   }
+  
+	public static String scrub(String input){
+		return input.toLowerCase().replaceAll("[^0-9a-z]+", " ").replace("\\s+", " ").trim();
+	}
+	
+	public static String[] TFTYPES = { "url", "title", "body", "header", "anchor" };
+	public static Double INCR = 1.0d;
+
+	public static Map<String, Map<String, Double>> getDocTermFreqs(Document d, Query q) {
+		// map from tf type -> queryWord -> score
+		Map<String, Map<String, Double>> tfs = new HashMap<String, Map<String, Double>>();
+
+		String sUrl = TFTYPES[0]; // "url"
+		String docUrl = scrub(d.url);
+		String[] docUrlWords = docUrl.split("\\s+");
+
+		tfs.put(sUrl, new HashMap<String, Double>());
+		for (String query_word : q.words) {
+			Double count = 0.0d;
+			for (int i = 0; i < docUrlWords.length; i++) {
+				if (query_word.equals(docUrlWords[i])) {
+					tfs.get(sUrl).put(query_word, count += INCR);
+				}
+			}
+		}
+
+		String sTitle = TFTYPES[1]; // title
+		String docTitle = d.title;
+		if (docTitle != null) {
+			String[] docTitleWords = docTitle.toLowerCase().split("\\s+");
+			tfs.put(sTitle, new HashMap<String, Double>());
+			for (String query_word : q.words) {
+				Double count = 0.0d;
+				for (int i = 0; i < docTitleWords.length; i++) {
+					if (query_word.equals(docTitleWords[i])) {
+						tfs.get(sTitle).put(query_word, count += INCR);
+					}
+				}
+			}
+		}
+
+		String sBody = TFTYPES[2];// body
+		Map<String, List<Integer>> docBodyHits = d.body_hits;
+		if (docBodyHits != null) {
+			tfs.put(sBody, new HashMap<String, Double>());
+			for (String query_word : q.words) {
+				if (docBodyHits.containsKey(query_word)) {
+					Double count = Double.valueOf((double) docBodyHits.get(
+							query_word).size());
+					tfs.get(sBody).put(query_word, count);
+				}
+			}
+		}
+
+
+		String sHeader = TFTYPES[3]; // header
+		List<String> docHeaders = d.headers;
+		if (docHeaders != null) {
+			tfs.put(sHeader, new HashMap<String, Double>());
+
+			for (String query_word : q.words) {
+				Double count = 0.0d;
+
+				for (String string : docHeaders) {
+					String[] docHeaderWords = string.toLowerCase().split("\\s+");
+
+					for (int j = 0; j < docHeaderWords.length; j++) {
+						if (query_word.equals(docHeaderWords[j])) {
+							tfs.get(sHeader).put(query_word, count += INCR);
+						}
+					}
+				}
+			}
+		}
+
+		String sAnchor = TFTYPES[4];
+		Map<String, Integer> docAnchors = d.anchors;
+		if (docAnchors != null) {
+			tfs.put(sAnchor, new HashMap<String, Double>());
+
+			for (String query_word : q.words) {
+				Double count = 0.0d;
+
+				for (Entry<String, Integer> anchorEntry : docAnchors.entrySet()) {
+					String[] anchorWords = anchorEntry.getKey().toLowerCase()
+							.split("\\s+");
+					Double countThisAnchor = Double
+							.valueOf((double) anchorEntry.getValue());
+
+					for (int j = 0; j < anchorWords.length; j++) {
+						if (query_word.equals(anchorWords[j])) {
+							if (tfs.get(sAnchor).containsKey(query_word)) {
+								Double prevCount = tfs.get(sAnchor).get(
+										query_word);
+								count = prevCount + countThisAnchor;
+							} else {
+								count = countThisAnchor;
+							}
+							tfs.get(sAnchor).put(query_word, count);
+						}
+					}
+
+				}
+			}
+		}
+		return tfs;
+	}
+
 
   public static void main(String[] args) {
     try {

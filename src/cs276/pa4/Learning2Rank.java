@@ -16,7 +16,7 @@ import weka.core.Instances;
 public class Learning2Rank {
 
 	
-	public static Classifier train(String train_data_file, String train_rel_file, int task, Map<String,Double> idfs) {
+	public static Classifier train(String train_data_file, String train_rel_file, int task, Map<String,Double> idfs) throws Exception {
 	    System.err.println("## Training with feature_file =" + train_data_file + ", rel_file = " + train_rel_file + " ... \n");
 	    Classifier model = null;
 	    Learner learner = null;
@@ -51,7 +51,7 @@ public class Learning2Rank {
 	    return model;
 	  }
 
-	 public static Map<String, List<String>> test(String test_data_file, Classifier model, int task, Map<String,Double> idfs){
+	 public static Map<String, List<String>> test(String test_data_file, Classifier model, int task, Map<String,Double> idfs) throws Exception{
 		 	System.err.println("## Testing with feature_file=" + test_data_file + " ... \n");
 		    Map<String, List<String>> ranked_queries = new HashMap<String, List<String>>();
 		    Learner learner = null;
@@ -99,10 +99,10 @@ public class Learning2Rank {
 	}
 	
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 	    if (args.length != 4 && args.length != 5) {
 	      System.err.println("Input arguments: " + Arrays.toString(args));
-	      System.err.println("Usage: <train_data_file> <train_data_file> <test_data_file> <task> [ranked_out_file]");
+	      System.err.println("Usage: <train_data_file> <train_rel_file> <test_data_file> <task> [ranked_out_file]");
 	      System.err.println("  ranked_out_file (optional): output results are written into the specified file. "
 	          + "If not, output to stdout.");
 	      return;
