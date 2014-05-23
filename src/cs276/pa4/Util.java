@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import cs276.pa4.stemmer.EnglishSnowballStemmerFactory;
+
 
 public class Util {
 	
@@ -158,7 +160,7 @@ public class Util {
 		for (String query_word : q.words) {
 			Double count = 0.0d;
 			for (int i = 0; i < docUrlWords.length; i++) {
-				if (query_word.equals(docUrlWords[i])) {
+				if (stem(query_word).equals(stem(docUrlWords[i]))) {
 					tfs.get(sUrl).put(query_word, count += INCR);
 				}
 			}
@@ -172,7 +174,7 @@ public class Util {
 			for (String query_word : q.words) {
 				Double count = 0.0d;
 				for (int i = 0; i < docTitleWords.length; i++) {
-					if (query_word.equals(docTitleWords[i])) {
+					if (stem(query_word).equals(stem(docTitleWords[i]))) {
 						tfs.get(sTitle).put(query_word, count += INCR);
 					}
 				}
@@ -205,7 +207,7 @@ public class Util {
 					String[] docHeaderWords = string.toLowerCase().split("\\s+");
 
 					for (int j = 0; j < docHeaderWords.length; j++) {
-						if (query_word.equals(docHeaderWords[j])) {
+						if (stem(query_word).equals(stem(docHeaderWords[j]))) {
 							tfs.get(sHeader).put(query_word, count += INCR);
 						}
 					}
@@ -228,7 +230,7 @@ public class Util {
 							.valueOf((double) anchorEntry.getValue());
 
 					for (int j = 0; j < anchorWords.length; j++) {
-						if (query_word.equals(anchorWords[j])) {
+						if (stem(query_word).equals(stem(anchorWords[j]))) {
 							if (tfs.get(sAnchor).containsKey(query_word)) {
 								Double prevCount = tfs.get(sAnchor).get(
 										query_word);
@@ -246,7 +248,17 @@ public class Util {
 		return tfs;
 	}
 
+	public static String stem(String word){
+		String stem_word = word;
+		try {
+			stem_word = EnglishSnowballStemmerFactory.getInstance().process(word);
 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return stem_word;
+	}
+	
   public static void main(String[] args) {
     try {
       System.out.print(loadRelData(args[0]));
