@@ -85,6 +85,10 @@ public class PairwiseLearner extends Learner {
 		
 		Instances dataset = null;
 		
+		List<String> classes = new ArrayList<String>();
+		classes.add("1");
+		classes.add("-1");
+		
 		/* Build attributes list */
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		attributes.add(new Attribute("url_w"));
@@ -92,7 +96,7 @@ public class PairwiseLearner extends Learner {
 		attributes.add(new Attribute("body_w"));
 		attributes.add(new Attribute("header_w"));
 		attributes.add(new Attribute("anchor_w"));
-		attributes.add(new Attribute("relevance_score"));
+		attributes.add(new Attribute("classification", classes));
 		dataset = new Instances("train_dataset", attributes, 0);
 		
 		Map<Query,List<Document>> queryDict = Util.loadTrainData(train_data_file);
