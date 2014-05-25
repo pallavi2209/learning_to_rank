@@ -133,11 +133,13 @@ public class PairwiseLearner extends Learner {
 					inst.setDataset(dataset);
 					inst.setClassValue(dataclass);
 					dataset.add(inst);
+					dataset = standardize(dataset);
 				}
 			}
 		}
 		
-		return standardize(dataset);
+		//return standardize(dataset);
+		return dataset;
 	}
 
 	@Override
@@ -201,13 +203,14 @@ public class PairwiseLearner extends Learner {
 				inst.insertAttributeAt(inst.numAttributes());
 				inst.setDataset(features);
 				features.add(inst);
-				
+				features = standardize(features);
 				testFeatures.index_map.get(q.query).put(d.url.toString(), index);
 				index++;
 			}
 		}
 		
-		testFeatures.features = standardize(features);
+		//testFeatures.features = standardize(features);
+		testFeatures.features = features;
 		return testFeatures;
 		
 	}
