@@ -76,6 +76,20 @@ public class PairwiseLearner extends Learner {
 	  return normalized;
   }
   
+  private double[] getTfVector(Query q, Document d, Map<String, Double> dfs) {
+	  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
+	  Map<String, Map<String, Double>> tfs = Util.getDocTermFreqs(d, q);
+	  for (int i = 0; i < Util.TFTYPES.length; i++) {
+		  	Map<String, Double> tf = tfs.get(Util.TFTYPES[i]);
+		  	for (String term : q.words) {
+		  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
+		  		double idf = Math.log10((Util.totFiles + 1.0)/df);
+		  		if (tf != null && tf.containsKey(term)) result[i] += tf.get(term) * idf;
+		  	}
+	  }
+	  return result;
+  }
+  
 	@Override
 	public Instances extract_train_features(String train_data_file,
 			String train_rel_file, Map<String, Double> idfs) throws Exception{
@@ -138,6 +152,7 @@ public class PairwiseLearner extends Learner {
 		
 		Instances features = null;
 		TestFeatures testFeatures = new TestFeatures();
+		testFeatures.index_map = new HashMap<String, Map<String, Integer>>();
 		
 		List<String> classes = new ArrayList<String>();
 		classes.add("1");
@@ -165,19 +180,30 @@ public class PairwiseLearner extends Learner {
 			testFeatures.index_map.put(q.query, new HashMap<String,Integer>());
 			List<Document> docs = entry.getValue();
 			
-			for (int i = 0; i < docs.size(); i++) {
-				Document d1 = docs.get(i);
-				for (int j = i; j < docs.size(); j++) {
-					Document d2 = docs.get(j);
-					double[] instance = extractData(q, d1, d2, 0.0, 0.0, idfs);
-					Instance inst = new DenseInstance(1.0, instance);
-					inst.insertAttributeAt(inst.numAttributes());
-					inst.setDataset(features);
-					features.add(inst);
-					
-					testFeatures.index_map.get(q.query).put(d1.url + "," + d2.url, index);
-					index++;	
-				}
+//			for (int i = 0; i < docs.size(); i++) {
+//				Document d1 = docs.get(i);
+//				for (int j = i; j < docs.size(); j++) {
+//					Document d2 = docs.get(j);
+//					double[] instance = extractData(q, d1, d2, 0.0, 0.0, idfs);
+//					Instance inst = new DenseInstance(1.0, instance);
+//					inst.insertAttributeAt(inst.numAttributes());
+//					inst.setDataset(features);
+//					features.add(inst);
+//					
+//					testFeatures.index_map.get(q.query).put(d1.url + "," + d2.url, index);
+//					index++;	
+//				}
+//			}
+			
+			for (Document d : docs) {
+				double[] instance = getTfVector(q, d, idfs);
+				Instance inst = new DenseInstance(1.0, instance);
+				inst.insertAttributeAt(inst.numAttributes());
+				inst.setDataset(features);
+				features.add(inst);
+				
+				testFeatures.index_map.get(q.query).put(d.url.toString(), index);
+				index++;
 			}
 		}
 		
@@ -210,7 +236,7 @@ public class PairwiseLearner extends Learner {
 					@Override
 					public int compare(String str1, String str2) 
 					{
-						Double score1 = linearScore(tf, model, q, str2);
+						Double score1 = linearScore(tf, model, q, str1);
 						Double score2 = linearScore(tf, model, q, str2);
 						return score2.compareTo(score1);
 					}	
