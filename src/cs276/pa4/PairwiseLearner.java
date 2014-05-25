@@ -15,9 +15,9 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SelectedTag;
-import weka.filters.unsupervised.attribute.Standardize;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NumericToNominal;
+import weka.filters.unsupervised.attribute.Standardize;
 
 public class PairwiseLearner extends Learner {
   private LibSVM model;
@@ -72,10 +72,10 @@ public class PairwiseLearner extends Learner {
   private Instances standardize(Instances instances) throws Exception{
 	  Standardize filter = new Standardize();
 	  filter.setInputFormat(instances);
-	  instances = Filter.useFilter(instances, filter);
+	  Instances normalized = Filter.useFilter(instances, filter);
 	  NumericToNominal ntn = new NumericToNominal();
-	  ntn.setInputFormat(instances);
-	  return Filter.useFilter(instances, ntn);
+	  ntn.setInputFormat(normalized);
+	  return Filter.useFilter(normalized, ntn);
   }
   
 	@Override
