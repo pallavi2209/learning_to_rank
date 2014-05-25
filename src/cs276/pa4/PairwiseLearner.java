@@ -61,8 +61,8 @@ public class PairwiseLearner extends Learner {
 	  	for (String term : q.words) {
 	  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
 	  		double idf = Math.log10((Util.totFiles + 1.0)/df);
-	  		if (tf1.containsKey(term)) result[i] += tf1.get(term) * idf;
-	  		if (tf2.containsKey(term)) result[i] -= tf2.get(term) * idf;
+	  		if (tf1 != null && tf1.containsKey(term)) result[i] += tf1.get(term) * idf;
+	  		if (tf2 != null && tf2.containsKey(term)) result[i] -= tf2.get(term) * idf;
 	  	}
 	  }
 	  return result;
