@@ -50,8 +50,8 @@ public class PairwiseLearner extends Learner {
   }
   
   private double[] extractData(Query q, Document d1, Document d2, double rel1, double rel2, Map<String, Double> dfs) {
-	  double relevance = (rel1 - rel1 > 0) ? 1.0 : -1.0;
-	  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0, relevance};
+	  //double relevance = (rel1 - rel1 > 0) ? 1.0 : -1.0;
+	  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
 	  Map<String, Map<String, Double>> tfs1 = Util.getDocTermFreqs(d1, q);
 	  Map<String, Map<String, Double>> tfs2 = Util.getDocTermFreqs(d2, q);
 	  
@@ -73,9 +73,10 @@ public class PairwiseLearner extends Learner {
 	  Standardize filter = new Standardize();
 	  filter.setInputFormat(instances);
 	  Instances normalized = Filter.useFilter(instances, filter);
-	  NumericToNominal ntn = new NumericToNominal();
-	  ntn.setInputFormat(normalized);
-	  return Filter.useFilter(normalized, ntn);
+	  return normalized;
+//	  NumericToNominal ntn = new NumericToNominal();
+//	  ntn.setInputFormat(normalized);
+//	  return Filter.useFilter(normalized, ntn);
   }
   
 	@Override
@@ -109,6 +110,9 @@ public class PairwiseLearner extends Learner {
 					double rel2 = relevanceScores.get(q.toString()).get(d2.url.toString()); 
 					double[] instance = extractData(q, d1, d2, rel1, rel2, idfs);
 					Instance inst = new DenseInstance(1.0, instance);
+					String dataclass = (rel1 > rel2) ? "1" : "-1";
+					//inst.setClassIndex(inst.numAttributes() - 1);
+					inst.setClassValue(dataclass);
 					dataset.add(inst);
 				}
 			}
