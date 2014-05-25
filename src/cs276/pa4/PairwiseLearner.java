@@ -17,6 +17,7 @@ import weka.core.Instances;
 import weka.core.SelectedTag;
 import weka.filters.unsupervised.attribute.Standardize;
 import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.NumericToNominal;
 
 public class PairwiseLearner extends Learner {
   private LibSVM model;
@@ -40,7 +41,7 @@ public class PairwiseLearner extends Learner {
     } catch (Exception e){
       e.printStackTrace();
     }
-    
+    	
     model.setCost(C);
     model.setGamma(gamma); // only matter for RBF kernel
     if(isLinearKernel){
@@ -71,7 +72,10 @@ public class PairwiseLearner extends Learner {
   private Instances standardize(Instances instances) throws Exception{
 	  Standardize filter = new Standardize();
 	  filter.setInputFormat(instances);
-	  return Filter.useFilter(instances, filter);
+	  instances = Filter.useFilter(instances, filter);
+	  NumericToNominal ntn = new NumericToNominal();
+	  ntn.setInputFormat(instances);
+	  return Filter.useFilter(instances, ntn);
   }
   
 	@Override
