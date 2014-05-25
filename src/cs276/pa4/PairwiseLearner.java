@@ -74,9 +74,6 @@ public class PairwiseLearner extends Learner {
 	  filter.setInputFormat(instances);
 	  Instances normalized = Filter.useFilter(instances, filter);
 	  return normalized;
-//	  NumericToNominal ntn = new NumericToNominal();
-//	  ntn.setInputFormat(normalized);
-//	  return Filter.useFilter(normalized, ntn);
   }
   
 	@Override
@@ -99,6 +96,9 @@ public class PairwiseLearner extends Learner {
 		attributes.add(new Attribute("classification", classes));
 		dataset = new Instances("train_dataset", attributes, 0);
 		
+		/* Set last attribute as target */
+		dataset.setClassIndex(dataset.numAttributes() - 1);
+		
 		Map<Query,List<Document>> queryDict = Util.loadTrainData(train_data_file);
 		/* query -> (url -> score) */
 		Map<String, Map<String, Double>> relevanceScores = Util.loadRelData(train_rel_file);
@@ -115,15 +115,13 @@ public class PairwiseLearner extends Learner {
 					double[] instance = extractData(q, d1, d2, rel1, rel2, idfs);
 					Instance inst = new DenseInstance(1.0, instance);
 					String dataclass = (rel1 > rel2) ? "1" : "-1";
-					//inst.setClassIndex(inst.numAttributes() - 1);
+					inst.insertAttributeAt(inst.numAttributes());
+					inst.setDataset(dataset);
 					inst.setClassValue(dataclass);
 					dataset.add(inst);
 				}
 			}
 		}
-		
-		/* Set last attribute as target */
-		dataset.setClassIndex(dataset.numAttributes() - 1);
 		
 		return standardize(dataset);
 	}
@@ -141,6 +139,10 @@ public class PairwiseLearner extends Learner {
 		Instances features = null;
 		TestFeatures testFeatures = new TestFeatures();
 		
+		List<String> classes = new ArrayList<String>();
+		classes.add("1");
+		classes.add("-1");
+		
 		/* Build attributes list */
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		attributes.add(new Attribute("url_w"));
@@ -148,8 +150,11 @@ public class PairwiseLearner extends Learner {
 		attributes.add(new Attribute("body_w"));
 		attributes.add(new Attribute("header_w"));
 		attributes.add(new Attribute("anchor_w"));
-		attributes.add(new Attribute("relevance_score"));
+		attributes.add(new Attribute("classification", classes));
 		features = new Instances("train_dataset", attributes, 0);
+		
+		/* Set last attribute as target */
+		features.setClassIndex(features.numAttributes() - 1);
 		
 		Map<Query,List<Document>> queryDict = Util.loadTrainData(test_data_file);
 		
@@ -166,6 +171,8 @@ public class PairwiseLearner extends Learner {
 					Document d2 = docs.get(j);
 					double[] instance = extractData(q, d1, d2, 0.0, 0.0, idfs);
 					Instance inst = new DenseInstance(1.0, instance);
+					inst.insertAttributeAt(inst.numAttributes());
+					inst.setDataset(features);
 					features.add(inst);
 					
 					testFeatures.index_map.get(q.query).put(d1.url + "," + d2.url, index);
@@ -174,8 +181,6 @@ public class PairwiseLearner extends Learner {
 			}
 		}
 		
-		/* Set last attribute as target */
-		features.setClassIndex(features.numAttributes() - 1);
 		testFeatures.features = standardize(features);
 		return testFeatures;
 		
