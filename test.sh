@@ -1,0 +1,1 @@
+./run.sh data/pa4.signal.train data/pa4.rel.train data/pa4.signal.dev data/pa4.rel.dev $1
