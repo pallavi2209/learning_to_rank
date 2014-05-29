@@ -54,17 +54,38 @@ public class PairwiseLearner extends Learner {
 	  Instances normalized = Filter.useFilter(instances, filter);
 	  return normalized;
   }
+
+  private double[] lengthNormalize(double[] vec) {
+  	double total = 0.0;
+  	for (double d : vec) total += d * d;
+  	//if (total == 0) return vec;
+  	double x = Math.sqrt(total);
+  	for (int i = 0; i < vec.length; i++) {
+  		vec[i] = vec[i] / x;
+  	}
+  	return vec;
+  }
+
   
-  private double[] getTfVector(Query q, Document d, Map<String, Double> dfs) {
+  private double[] getScoreVector(Query q, Document d, Map<String, Double> dfs) {
 	  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
 	  Map<String, Map<String, Double>> tfs = Util.getDocTermFreqs(d, q);
 	  for (int i = 0; i < Util.TFTYPES.length; i++) {
 		  	Map<String, Double> tf = tfs.get(Util.TFTYPES[i]);
-		  	for (String term : q.words) {
+			double zone_tfs[] = new double[q.words.size()];
+		  	for (int j = 0; j < q.words.size(); j++) {
+		  		String term = q.words.get(j);
 		  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
 		  		double idf = Math.log10((Util.totFiles + 1.0)/df);
-		  		if (tf != null && tf.containsKey(term)) result[i] += tf.get(term) * idf;
+		  		double tfidf = (tf != null && tf.containsKey(term)) ? tf.get(term) * idf : idf;
+		  		zone_tfs[j] = tfidf;
 		  	}
+		  	zone_tfs = lengthNormalize(zone_tfs);
+		  	double score = 0.0;
+		  	for (int j = 0; j < zone_tfs.length; j++) {
+		  		score += zone_tfs[j];
+		  	}
+		  	result[i] = score;
 	  }
 	  return result;
   }
@@ -117,7 +138,7 @@ public class PairwiseLearner extends Learner {
 			List<Document> docs = entry.getValue();
 			Map<String, Integer> indexes = new HashMap<String, Integer>();
 			for (Document d : docs) {
-				double[] tfvector = getTfVector(q, d, idfs);
+				double[] tfvector = getScoreVector(q, d, idfs);
 				Instance inst = new DenseInstance(1.0, tfvector);
 				toNormalize.add(inst);
 				indexes.put(d.url.toString(), index++);
@@ -127,38 +148,29 @@ public class PairwiseLearner extends Learner {
 
 		Instances normalized = standardize(toNormalize);
 
-		int count = 0;
 		for (Entry<Query, List<Document>> entry : queryDict.entrySet()) {
 			Query q = entry.getKey();
 			List<Document> docs = entry.getValue();
 			for (int i = 0; i < docs.size(); i++) {
 				Document d1 = docs.get(i);
 				double rel1 = relevanceScores.get(q.toString()).get(d1.url.toString()); 
-				for (int j = i + 1; j < docs.size(); j++) {
+				for (int j = 0; j < docs.size(); j++) {
 					Document d2 = docs.get(j);
 					double rel2 = relevanceScores.get(q.toString()).get(d2.url.toString()); 
-					double[] tfvector1 = normalized.get(instanceIndexes.get(q.toString()).get(d1.url.toString())).toDoubleArray();
-					double[] tfvector2 = normalized.get(instanceIndexes.get(q.toString()).get(d2.url.toString())).toDoubleArray();
+					if (i == j || rel1 == rel2) continue;
+					double[] vector1 = normalized.get(instanceIndexes.get(q.toString()).get(d1.url.toString())).toDoubleArray();
+					double[] vector2 = normalized.get(instanceIndexes.get(q.toString()).get(d2.url.toString())).toDoubleArray();
 
 					Instance inst = null;
 					String dataclass;
-					if ((((count % 2 == 0)) && (rel1 > rel2)) || ((count % 2 != 0) && (rel1 < rel2))) {
-
-						double[] instances = difference(tfvector1, tfvector2);
-						inst = new DenseInstance(1.0, instances);
-					} else {
-						double[] instances = difference(tfvector2, tfvector1);
-						inst = new DenseInstance(1.0, instances);
-					}
-
-					dataclass = (count % 2 == 0) ? "1" : "-1";
-
+					double[] instances = difference(vector1, vector2);
+					inst = new DenseInstance(1.0, instances);
+					dataclass = (rel1 > rel2) ? "1" : "-1";
 
 					inst.insertAttributeAt(inst.numAttributes());
 					inst.setDataset(dataset);
 					inst.setClassValue(dataclass);
 					dataset.add(inst);
-					count++;
 				}
 			}
 		}
@@ -192,7 +204,7 @@ public class PairwiseLearner extends Learner {
 		attributes.add(new Attribute("header_w"));
 		attributes.add(new Attribute("anchor_w"));
 		attributes.add(new Attribute("classification", classes));
-		features = new Instances("train_dataset", attributes, 0);
+		features = new Instances("test_dataset", attributes, 0);
 		
 		/* Set last attribute as target */
 		features.setClassIndex(features.numAttributes() - 1);
@@ -207,7 +219,7 @@ public class PairwiseLearner extends Learner {
 			List<Document> docs = entry.getValue();
 			
 			for (Document d : docs) {
-				double[] instance = getTfVector(q, d, idfs);
+				double[] instance = getScoreVector(q, d, idfs);
 				Instance inst = new DenseInstance(1.0, instance);
 				inst.insertAttributeAt(inst.numAttributes());
 				inst.setDataset(features);
@@ -235,7 +247,7 @@ public class PairwiseLearner extends Learner {
 		} catch (Exception e) {
 			System.err.println("An error occured while classifying.");
 		}
-		return (classification > 0.0) ? -1 : 1;
+		return (classification > 0.0) ? 1 : -1;
 	}
 
 	@Override
