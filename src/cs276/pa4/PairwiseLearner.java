@@ -21,6 +21,7 @@ import weka.filters.unsupervised.attribute.Standardize;
 
 public class PairwiseLearner extends Learner {
   private LibSVM model;
+  private Standardize filter = new Standardize();
   public PairwiseLearner(boolean isLinearKernel){
     try{
       model = new LibSVM();
@@ -49,7 +50,7 @@ public class PairwiseLearner extends Learner {
   
   
   private Instances standardize(Instances instances) throws Exception{
-	  Standardize filter = new Standardize();
+	  //Standardize filter = new Standardize();
 	  filter.setInputFormat(instances);
 	  Instances normalized = Filter.useFilter(instances, filter);
 	  return normalized;
@@ -77,10 +78,9 @@ public class PairwiseLearner extends Learner {
 		  		String term = q.words.get(j);
 		  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
 		  		double idf = Math.log10((Util.totFiles + 1.0)/df);
-		  		double tfidf = (tf != null && tf.containsKey(term)) ? tf.get(term) * idf : idf;
+		  		double tfidf = (tf != null && tf.containsKey(term)) ? (Math.log10(tf.get(term)) + 1.0) * idf: 0.0;
 		  		zone_tfs[j] = tfidf;
 		  	}
-		  	zone_tfs = lengthNormalize(zone_tfs);
 		  	double score = 0.0;
 		  	for (int j = 0; j < zone_tfs.length; j++) {
 		  		score += zone_tfs[j];
@@ -104,6 +104,7 @@ public class PairwiseLearner extends Learner {
 			String train_rel_file, Map<String, Double> idfs) throws Exception{
 		
 		Instances dataset = null;
+		Instances normalized = null;
 		
 		List<String> classes = new ArrayList<String>();
 		classes.add("1");
@@ -116,11 +117,9 @@ public class PairwiseLearner extends Learner {
 		attributes.add(new Attribute("body_w"));
 		attributes.add(new Attribute("header_w"));
 		attributes.add(new Attribute("anchor_w"));
-		
-		Instances toNormalize = new Instances("normalized", attributes, 0);
-
 		attributes.add(new Attribute("classification", classes));
 		dataset = new Instances("train_dataset", attributes, 0);
+		normalized = new Instances("normalized", attributes, 0);
 		
 		/* Set last attribute as target */
 		dataset.setClassIndex(dataset.numAttributes() - 1);
@@ -138,15 +137,20 @@ public class PairwiseLearner extends Learner {
 			List<Document> docs = entry.getValue();
 			Map<String, Integer> indexes = new HashMap<String, Integer>();
 			for (Document d : docs) {
-				double[] tfvector = getScoreVector(q, d, idfs);
-				Instance inst = new DenseInstance(1.0, tfvector);
-				toNormalize.add(inst);
+				double[] vector = getScoreVector(q, d, idfs);
+				Instance inst = new DenseInstance(1.0, vector);
+				normalized.add(inst);
 				indexes.put(d.url.toString(), index++);
 			}
 			instanceIndexes.put(q.toString(), indexes);
 		}
 
-		Instances normalized = standardize(toNormalize);
+		System.out.println(normalized.numInstances());
+
+		normalized = standardize(normalized);
+
+		System.out.println(normalized.numInstances());
+		
 
 		for (Entry<Query, List<Document>> entry : queryDict.entrySet()) {
 			Query q = entry.getKey();
@@ -157,19 +161,17 @@ public class PairwiseLearner extends Learner {
 				for (int j = 0; j < docs.size(); j++) {
 					Document d2 = docs.get(j);
 					double rel2 = relevanceScores.get(q.toString()).get(d2.url.toString()); 
-					if (i == j || rel1 == rel2) continue;
+					if (i == j | rel1 == rel2) continue;
 					double[] vector1 = normalized.get(instanceIndexes.get(q.toString()).get(d1.url.toString())).toDoubleArray();
 					double[] vector2 = normalized.get(instanceIndexes.get(q.toString()).get(d2.url.toString())).toDoubleArray();
 
-					Instance inst = null;
-					String dataclass;
-					double[] instances = difference(vector1, vector2);
-					inst = new DenseInstance(1.0, instances);
-					dataclass = (rel1 > rel2) ? "1" : "-1";
+
+					double[] diff = difference(vector1, vector2);
+					Instance inst = new DenseInstance(1.0, diff);
+					String dataclass = (rel1 > rel2) ? "1" : "-1";
 
 					inst.insertAttributeAt(inst.numAttributes());
-					inst.setDataset(dataset);
-					inst.setClassValue(dataclass);
+					inst.setValue(dataset.attribute(inst.numAttributes() - 1), dataclass);
 					dataset.add(inst);
 				}
 			}
@@ -211,23 +213,25 @@ public class PairwiseLearner extends Learner {
 		
 		Map<Query,List<Document>> queryDict = Util.loadTrainData(test_data_file);
 		
+		int index = 0;
 		for (Entry<Query, List<Document>> entry : queryDict.entrySet()) {
 			Query q = entry.getKey();
-			
-			int index = 0;
-			testFeatures.index_map.put(q.query, new HashMap<String,Integer>());
+			//testFeatures.index_map.put(q.query, new HashMap<String,Integer>());
 			List<Document> docs = entry.getValue();
-			
+			Map<String, Integer> queryFeatures = new HashMap<String, Integer>();
 			for (Document d : docs) {
 				double[] instance = getScoreVector(q, d, idfs);
 				Instance inst = new DenseInstance(1.0, instance);
 				inst.insertAttributeAt(inst.numAttributes());
 				inst.setDataset(features);
+				inst.setClassMissing();
 				features.add(inst);
-				testFeatures.index_map.get(q.query).put(d.url.toString(), index++);
+				//testFeatures.index_map.get(q.query).put(d.url.toString(), index++);
+				queryFeatures.put(d.url.toString(), index++);
 			}
+			testFeatures.index_map.put(q.query, queryFeatures);
 		}
-		
+		System.out.println("Num Intances: " + features.numInstances() + " Index: " + index);
 		testFeatures.features = standardize(features);
 		return testFeatures;
 		
@@ -235,10 +239,10 @@ public class PairwiseLearner extends Learner {
 
 	
 	private int compareDocs(TestFeatures tf, Classifier model, String q, String url1, String url2)  {
-		double[] tfvector1 = tf.features.get(tf.index_map.get(q).get(url1)).toDoubleArray();
-		double[] tfvector2 = tf.features.get(tf.index_map.get(q).get(url2)).toDoubleArray();
-		double[] difference = difference(tfvector1, tfvector2);
-		Instance inst = new DenseInstance(1.0, difference);
+		double[] vector1 = tf.features.get(tf.index_map.get(q).get(url1)).toDoubleArray();
+		double[] vector2 = tf.features.get(tf.index_map.get(q).get(url2)).toDoubleArray();
+		double[] diff = difference(vector1, vector2);
+		Instance inst = new DenseInstance(1.0, diff);
 		inst.setDataset(tf.features);
 		double classification = 1.0;
 		try {
