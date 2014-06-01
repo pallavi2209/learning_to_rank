@@ -234,6 +234,7 @@ public class PairwiseLearner extends Learner {
 		double[] vector2 = tf.features.get(tf.index_map.get(q).get(url2)).toDoubleArray();
 		double[] diff = difference(vector1, vector2);
 		Instance inst = new DenseInstance(1.0, diff);
+
 		inst.setDataset(tf.features);
 		double classification = 1.0;
 		try {
