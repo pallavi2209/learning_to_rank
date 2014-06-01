@@ -17,7 +17,13 @@ fi
 
 #ant
 
-#echo ""
-#echo "# Executing: java -cp bin:lib/weka.jar cs276.pa4.Learning2Rank $train_signal_file $train_rel_file $test_signal_file $task $out_file"
+echo ""
+echo "# Executing: java -cp bin:lib/weka.jar cs276.pa4.Learning2Rank $train_signal_file $train_rel_file $test_signal_file $task $out_file"
 java -cp bin:lib/weka.jar cs276.pa4.Learning2Rank $train_signal_file $train_rel_file $test_signal_file $task $out_file
 
+# for c in `cat C.txt`; do
+# 	for gamma in `cat gamma.txt`; do
+#     	java -cp bin:lib/weka.jar cs276.pa4.Learning2Rank $train_signal_file $train_rel_file $test_signal_file $task $out_file $c $gamma
+#     	rm svmtemp.txt
+#     done
+# done

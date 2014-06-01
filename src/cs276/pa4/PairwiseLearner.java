@@ -21,7 +21,6 @@ import weka.filters.unsupervised.attribute.Standardize;
 
 public class PairwiseLearner extends Learner {
   private LibSVM model;
-  private Standardize filter = new Standardize();
   public PairwiseLearner(boolean isLinearKernel){
     try{
       model = new LibSVM();
@@ -50,35 +49,31 @@ public class PairwiseLearner extends Learner {
   
   
   private Instances standardize(Instances instances) throws Exception{
-	  //Standardize filter = new Standardize();
+	  Standardize filter = new Standardize();
 	  filter.setInputFormat(instances);
 	  Instances normalized = Filter.useFilter(instances, filter);
 	  return normalized;
   }
 
-  private double[] lengthNormalize(double[] vec) {
-  	double total = 0.0;
-  	for (double d : vec) total += d * d;
-  	//if (total == 0) return vec;
-  	double x = Math.sqrt(total);
-  	for (int i = 0; i < vec.length; i++) {
-  		vec[i] = vec[i] / x;
-  	}
-  	return vec;
-  }
-
   
   private double[] getScoreVector(Query q, Document d, Map<String, Double> dfs) {
 	  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
-	  Map<String, Map<String, Double>> tfs = Util.getDocTermFreqs(d, q);
+	  Map<String, Map<String, Double>> docTermFreqs = Util.getDocTermFreqs(d, q);
 	  for (int i = 0; i < Util.TFTYPES.length; i++) {
-		  	Map<String, Double> tf = tfs.get(Util.TFTYPES[i]);
+		  	Map<String, Double> tfs = docTermFreqs.get(Util.TFTYPES[i]);
+		  	if (tfs == null) continue;
 			double zone_tfs[] = new double[q.words.size()];
+			double maxtf = 0.0;
+			for (String term : tfs.keySet()) {
+				if (tfs.get(term) > maxtf) maxtf = tfs.get(term);
+			}
 		  	for (int j = 0; j < q.words.size(); j++) {
 		  		String term = q.words.get(j);
+		  		double tf = tfs.containsKey(term) ? 0.5 * tfs.get(term) / maxtf + 0.5 : 0.0;
 		  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
 		  		double idf = Math.log10((Util.totFiles + 1.0)/df);
-		  		double tfidf = (tf != null && tf.containsKey(term)) ? (Math.log10(tf.get(term)) + 1.0) * idf: 0.0;
+		  		// double tfidf = (tf != null && tfs.containsKey(term)) ? (Math.log10(tfs.get(term)) + 1.0) * idf: 0.0;
+		  		double tfidf = tf * idf;
 		  		zone_tfs[j] = tfidf;
 		  	}
 		  	double score = 0.0;
@@ -145,11 +140,8 @@ public class PairwiseLearner extends Learner {
 			instanceIndexes.put(q.toString(), indexes);
 		}
 
-		System.out.println(normalized.numInstances());
 
 		normalized = standardize(normalized);
-
-		System.out.println(normalized.numInstances());
 		
 
 		for (Entry<Query, List<Document>> entry : queryDict.entrySet()) {
@@ -231,7 +223,6 @@ public class PairwiseLearner extends Learner {
 			}
 			testFeatures.index_map.put(q.query, queryFeatures);
 		}
-		System.out.println("Num Intances: " + features.numInstances() + " Index: " + index);
 		testFeatures.features = standardize(features);
 		return testFeatures;
 		
@@ -247,7 +238,6 @@ public class PairwiseLearner extends Learner {
 		double classification = 1.0;
 		try {
 			classification = model.classifyInstance(inst);
-			//System.out.println(classification);
 		} catch (Exception e) {
 			System.err.println("An error occured while classifying.");
 		}

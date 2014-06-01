@@ -9,6 +9,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.io.*;
+
+
 
 import weka.classifiers.Classifier;
 import weka.core.Instances;
@@ -24,8 +28,22 @@ public class Learning2Rank {
  		if (task == 1) {
 			learner = new PointwiseLearner();
 		} else if (task == 2) {
-		  boolean isLinearKernel = true;
-			learner = new PairwiseLearner(isLinearKernel);
+		  
+		  double C = 1.0;
+		  double gamma = 0.25;
+		  // String line;
+		  // BufferedReader reader = new BufferedReader(new FileReader("svmtemp.txt"));
+		  // try {
+		  // 	line = reader.readLine();
+		  // 	C = Double.parseDouble(line);
+		  // 	line = reader.readLine();
+		  // 	gamma = Double.parseDouble(line);
+		  // } catch (Exception e) {
+		  // 	System.err.println("Error while getting C and gamma.");
+		  // 	System.exit(1);
+		  // }
+		  boolean isLinearKernel = false;
+		  learner = new PairwiseLearner(C, gamma, isLinearKernel);
 		} else if (task == 3) {
 			
 			/* 
@@ -100,7 +118,7 @@ public class Learning2Rank {
 	
 
 	public static void main(String[] args) throws Exception {
-	    if (args.length != 4 && args.length != 5) {
+	    if (args.length != 4 && args.length != 5 && args.length != 7) {
 	      System.err.println("Input arguments: " + Arrays.toString(args));
 	      System.err.println("Usage: <train_data_file> <train_rel_file> <test_data_file> <task> [ranked_out_file]");
 	      System.err.println("  ranked_out_file (optional): output results are written into the specified file. "
@@ -113,7 +131,7 @@ public class Learning2Rank {
 	    String test_data_file = args[2];
 	    int task = Integer.parseInt(args[3]);
 	    String ranked_out_file = "";
-	    if (args.length == 5){
+	    if (args.length >= 5){
 	      ranked_out_file = args[4];
 	    }
 	    
@@ -125,6 +143,28 @@ public class Learning2Rank {
 	    } catch(IOException e){
 	      e.printStackTrace();
 	    }
+
+	    System.err.println("Num args: " + args.length);
+	    if (args.length == 7) {
+	    	try {
+	    		File file = new File("svmtemp.txt");
+	    		if (!file.createNewFile()) {
+	    			System.err.println("File already exists.");
+	    			System.exit(1);
+	    		}
+	    		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+	    		writer.write(args[5]);
+	    		writer.newLine();
+	    		writer.write(args[6]);
+	    		writer.newLine();
+	    		writer.close();
+	    	} catch (Exception e) {
+	    		System.err.println("An error occured.");
+	    		System.exit(1);
+	    	}
+	    }
+
+	    
 	    
 	    /* Train & test */
 	    System.err.println("### Running task" + task + "...");		
@@ -135,7 +175,14 @@ public class Learning2Rank {
       String trainOutFile="tmp.train.ranked";
       writeRankedResultsToFile(trained_ranked_queries, new PrintStream(new FileOutputStream(trainOutFile)));
       NdcgMain ndcg = new NdcgMain(train_rel_file);
-      System.err.println("# Trained NDCG=" + ndcg.score(trainOutFile));
+      double score = ndcg.score(trainOutFile);
+      System.err.println("# Trained NDCG=" + score);
+
+      
+
+
+
+
       (new File(trainOutFile)).delete();
       
 	    Map<String, List<String>> ranked_queries = test(test_data_file, model, task, idfs);
@@ -149,6 +196,31 @@ public class Learning2Rank {
 	      } catch (FileNotFoundException e) {
 	        e.printStackTrace();
 	      }
+	    }
+
+	    ndcg = new NdcgMain("data/pa4.rel.dev");
+	    score = ndcg.score(ranked_out_file);
+	    System.err.println("DEV SCORE: " + score);
+	    if (args.length == 7) {
+	    	String filename = "C" + args[5] + "Gamma" + args[6];
+	    	try {
+	    		File file = new File("results/" + filename);
+	    		if (!file.createNewFile()) {
+	    			System.err.println("File already exists.");
+	    			System.exit(1);
+	    		}
+	    		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+	    		writer.write("C: " + args[5]);
+	    		writer.newLine();
+	    		writer.write("Gamma: " + args[6]);
+	    		writer.newLine();
+	    		writer.write("Score: " + score);
+	    		writer.newLine();
+	    		writer.close();
+	    	} catch (Exception e) {
+	    		System.err.println("An error occured.");
+	    		System.exit(1);
+	    	}
 	    }
 	}
 }
