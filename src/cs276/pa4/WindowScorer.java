@@ -195,24 +195,4 @@ public class WindowScorer{
 
 	}
 	
-	public double[] getWindowScoreVector(Query q, Document d, Map<String, Double> dfs, Map<Query,List<Document>> queryDict){
-		double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
-		double boost = getBoost(q, d);
-		
-		BM25Scorer bmScorer = new BM25Scorer(queryDict);
-		double[] bm25Vector = bmScorer.getBM25ScoreVector(q, d, dfs);
-		
-		for(int i = 0; i<bm25Vector.length; i++){
-			result[i]= bm25Vector[i]*boost;
-		}
-//		CosineScorer cosScore = new CosineScorer();
-//		double[] cosineVector = cosScore.getCosineScoreVector(q, d, dfs);
-//		
-//		for(int i = 0; i<cosineVector.length; i++){
-//			result[i]= cosineVector[i]*boost;
-//		}
-		
-		return result;
-	}
-	
 }

@@ -93,12 +93,31 @@ public class PairwiseAddedFeatures extends Learner{
 			  isTilde = 1;
 		  }
 		  result[numTFTypes+5] = (double)isTilde;
-		  result[numTFTypes+6] = (double)d.url.length();
+		  result[numTFTypes+6] = (double)d.title.length();
 		  int isID = 0;
 		  if(d.url.contains("id=")||d.url.contains("ID=")){
 			  isID = 1;
 		  }
 		  result[numTFTypes+7] = (double)isID;
+//		  int ifMatchPresent = 0;
+//		while (true) {
+//			if (d.title != null && q.query.equals(d.title)) {
+//				ifMatchPresent = 1;
+//				break;
+//			}
+//
+//			if (d.headers != null) {
+//				for (String str : d.headers) {
+//					if (str.equals(q.query)) {
+//						ifMatchPresent = 1;
+//						break;
+//					}
+//				}
+//			}else{
+//				break;
+//			}
+//		}
+//		  result[numTFTypes+8] = (double)ifMatchPresent;
 		  return result;
 	  }
 
@@ -137,6 +156,7 @@ public class PairwiseAddedFeatures extends Learner{
 			attributes.add(new Attribute("isTilde_w"));
 			attributes.add(new Attribute("url_length"));
 			attributes.add(new Attribute("isID_w"));
+//			attributes.add(new Attribute("isHeaderPresent"));
 			attributes.add(new Attribute("classification", classes));
 			dataset = new Instances("train_dataset", attributes, 0);
 			normalized = new Instances("normalized", attributes, 0);
@@ -233,6 +253,7 @@ public class PairwiseAddedFeatures extends Learner{
 			attributes.add(new Attribute("isTilde_w"));
 			attributes.add(new Attribute("url_length"));
 			attributes.add(new Attribute("isID_w"));
+//			attributes.add(new Attribute("isHeaderPresent"));
 			attributes.add(new Attribute("classification", classes));
 			features = new Instances("test_dataset", attributes, 0);
 			

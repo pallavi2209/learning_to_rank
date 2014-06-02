@@ -45,10 +45,14 @@ public class Learning2Rank {
 		  boolean isLinearKernel = false;
 		  learner = new PairwiseLearner(C, gamma, isLinearKernel);
 		} else if (task == 3) {
-			boolean isLinearKernel = true;
-			learner = new PairwiseAddedFeatures(isLinearKernel);
+			// boolean isLinearKernel = true;
+			// learner = new PairwiseAddedFeatures(isLinearKernel);
+			double C = 1.0;
+			double gamma = 0.25;
+			boolean isLinearKernel = false;
+			learner = new PairwiseAddedFeatures(C, gamma, isLinearKernel);
 			System.err.println("Task 3");
-			
+
 		} else if (task == 4) {
 			
 			/* 
@@ -74,11 +78,19 @@ public class Learning2Rank {
 	 		if (task == 1) {
 				learner = new PointwiseLearner();
 			} else if (task == 2) {
-			  boolean isLinearKernel = true;
-				learner = new PairwiseLearner(isLinearKernel);
+//			  boolean isLinearKernel = true;
+//				learner = new PairwiseLearner(isLinearKernel);
+				double C = 1.0;
+				double gamma = 0.25;
+				boolean isLinearKernel = false;
+				learner = new PairwiseLearner(C, gamma, isLinearKernel);
 			} else if (task == 3) {
-				boolean isLinearKernel = true;
-				learner = new PairwiseAddedFeatures(isLinearKernel);
+//				boolean isLinearKernel = true;
+//				learner = new PairwiseAddedFeatures(isLinearKernel);
+				double C = 1.0;
+				double gamma = 0.25;
+				boolean isLinearKernel = false;
+				learner = new PairwiseAddedFeatures(C, gamma, isLinearKernel);
 				System.err.println("Task 3");
 				
 			} else if (task == 4) {

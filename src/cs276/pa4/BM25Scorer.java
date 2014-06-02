@@ -196,33 +196,5 @@ public class BM25Scorer {
 //		  score += pageRankLambda * pagerankScores.get(d);
 		  return score;
 	}
-
-	
-	  public  double[] getBM25ScoreVector(Query q, Document d, Map<String, Double> dfs) {
-		  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0};
-		  Map<String, Map<String, Double>> tfs = Util.getDocTermFreqs(d, q);
-		  this.normalizeTFsBM25(tfs, d, q);
-
-		  for (int i = 0; i < Util.TFTYPES.length; i++) {
-			  	Map<String, Double> tf = tfs.get(Util.TFTYPES[i]);
-				double zone_tfs[] = new double[q.words.size()];
-			  	for (int j = 0; j < q.words.size(); j++) {
-			  		String term = q.words.get(j);
-			  		double df = dfs.containsKey(term) ? dfs.get(term) + 1.0 : 1.0;
-			  		double idf = Math.log10((Util.totFiles + 1.0)/df);
-			  		double subLinearTf = (tf != null && tf.containsKey(term)) ? Math.log10(tf.get(term)) + 1.0 : 0.0;
-			  		double bm25Score = idf * (k1 + 1) * subLinearTf / (k1 + subLinearTf);
-			  		zone_tfs[j] = bm25Score;
-			  	}
-			  	double score = 0.0;
-			  	for (int j = 0; j < zone_tfs.length; j++) {
-			  		score += zone_tfs[j];
-			  	}
-//			  	score += pageRankLambda * pagerankScores.get(d);
-			  	result[i] = score;
-		  }
-		  return result;
-	  }
-
 	
 }
