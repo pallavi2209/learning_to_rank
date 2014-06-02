@@ -46,7 +46,7 @@ public class Learning2Rank {
 		  learner = new PairwiseLearner(C, gamma, isLinearKernel);
 		} else if (task == 3) {
 			boolean isLinearKernel = true;
-			learner = new PairwisePlusLearner(isLinearKernel, train_data_file);
+			learner = new PairwiseAddedFeatures(isLinearKernel);
 			System.err.println("Task 3");
 			
 		} else if (task == 4) {
@@ -78,7 +78,7 @@ public class Learning2Rank {
 				learner = new PairwiseLearner(isLinearKernel);
 			} else if (task == 3) {
 				boolean isLinearKernel = true;
-				learner = new PairwisePlusLearner(isLinearKernel, test_data_file);
+				learner = new PairwiseAddedFeatures(isLinearKernel);
 				System.err.println("Task 3");
 				
 			} else if (task == 4) {
