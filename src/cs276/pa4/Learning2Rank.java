@@ -45,8 +45,8 @@ public class Learning2Rank {
 		  boolean isLinearKernel = false;
 		  learner = new PairwiseLearner(C, gamma, isLinearKernel);
 		} else if (task == 3) {
-			// boolean isLinearKernel = true;
-			// learner = new PairwiseAddedFeatures(isLinearKernel);
+//			 boolean isLinearKernel = true;
+//			 learner = new PairwiseAddedFeatures(isLinearKernel);
 			double C = 1.0;
 			double gamma = 0.25;
 			boolean isLinearKernel = false;

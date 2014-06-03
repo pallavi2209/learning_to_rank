@@ -58,7 +58,7 @@ public class PairwiseAddedFeatures extends Learner{
 	  private double[] getScoreVector(Query q, Document d, Map<String, Double> dfs, Map<Query, List<Document>> queryDict) {
 		  
 		  int numTFTypes = Util.TFTYPES.length;
-		  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+		  double[] result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 		  Map<String, Map<String, Double>> tfs = Util.getDocTermFreqs(d, q);
 		  for (int i = 0; i < Util.TFTYPES.length; i++) {
 			  	Map<String, Double> tf = tfs.get(Util.TFTYPES[i]);
@@ -76,53 +76,62 @@ public class PairwiseAddedFeatures extends Learner{
 			  	}
 			  	result[i] = score;
 		  }
+//		  int matchPresent = getScoreWithoutBody(q,d, dfs, tfs) ? 1 :0;
 		  BM25Scorer bmScorer = new BM25Scorer(queryDict);
 		  WindowScorer wScorer = new WindowScorer();
-		  ExtraScorer extraScorer = new ExtraScorer();
+//		  ExtraScorer extraScorer = new ExtraScorer();
 		  result[numTFTypes] = bmScorer.getNetScore(q, d, dfs);
 		  result[numTFTypes+1] = wScorer.getBoost(q, d);
 		  result[numTFTypes+2] = (double)d.page_rank;
-		  result[numTFTypes+3] = extraScorer.calcURLrelevance(q.words, d.url);
+//		  result[numTFTypes+3] = extraScorer.calcURLrelevance(q.words, d.url);
 		  int isPdf = 0;
 		  if(d.url.endsWith("pdf")){
 			  isPdf = 1;
 		  }
-		  result[numTFTypes+4] = (double)isPdf;
+		  result[numTFTypes+3] = (double)isPdf;
 		  int isTilde = 0;
 		  if(d.url.contains("~")){
 			  isTilde = 1;
 		  }
-		  result[numTFTypes+5] = (double)isTilde;
-		  result[numTFTypes+6] = (double)d.title.length();
+		  result[numTFTypes+4] = (double)isTilde;
+		  result[numTFTypes+5] = (double)d.title.length();
 		  int isID = 0;
 		  if(d.url.contains("id=")||d.url.contains("ID=")){
 			  isID = 1;
 		  }
-		  result[numTFTypes+7] = (double)isID;
-//		  int ifMatchPresent = 0;
-//		while (true) {
-//			if (d.title != null && q.query.equals(d.title)) {
-//				ifMatchPresent = 1;
-//				break;
-//			}
-//
-//			if (d.headers != null) {
-//				for (String str : d.headers) {
-//					if (str.equals(q.query)) {
-//						ifMatchPresent = 1;
-//						break;
-//					}
-//				}
-//			}else{
-//				break;
-//			}
-//		}
-//		  result[numTFTypes+8] = (double)ifMatchPresent;
+		  result[numTFTypes+6] = (double)isID;
+//		  result[numTFTypes+3] = (double)matchPresent;
 		  return result;
 	  }
 
-	  private double[] difference(double[] vec1, double[]vec2) {
-	  	double[] result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+//	  private boolean getScoreWithoutBody(Query q, Document d,
+//			Map<String, Double> dfs, Map<String, Map<String, Double>> tfs) {
+//		  
+//		  boolean matchPresent = false;
+//		  if(d.title!=null && d.title.trim().equals(q.query)){
+//			  matchPresent = true;
+//		  }
+//		  if(!matchPresent && d.headers!=null){
+//			  for (String header : d.headers) {
+//				if(header.trim().equals(q.query)){
+//					matchPresent = true;
+//				}
+//			}
+//		  }
+////		  if(!matchPresent && d.anchors!=null){
+////			  for (String anchor : d.anchors.keySet()) {
+////				if(anchor.trim().equals(q.query)){
+////					matchPresent = true;
+////				}
+////			}
+////		  }
+//		  
+//		  return matchPresent;
+//		  
+//	}
+
+	private double[] difference(double[] vec1, double[]vec2) {
+	  	double[] result = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 	  	for (int i = 0; i < result.length; i++) {
 	  		result[i] += vec1[i];
 	  		result[i] -= vec2[i];
@@ -151,10 +160,10 @@ public class PairwiseAddedFeatures extends Learner{
 			attributes.add(new Attribute("bm25_w"));
 			attributes.add(new Attribute("window_w"));
 			attributes.add(new Attribute("pagerank_w"));
-			attributes.add(new Attribute("url_rel_w"));
+//			attributes.add(new Attribute("url_rel_w"));
 			attributes.add(new Attribute("isPdf_w"));
 			attributes.add(new Attribute("isTilde_w"));
-			attributes.add(new Attribute("url_length"));
+			attributes.add(new Attribute("title_length"));
 			attributes.add(new Attribute("isID_w"));
 //			attributes.add(new Attribute("isHeaderPresent"));
 			attributes.add(new Attribute("classification", classes));
@@ -184,13 +193,7 @@ public class PairwiseAddedFeatures extends Learner{
 				}
 				instanceIndexes.put(q.toString(), indexes);
 			}
-
-//			System.out.println(normalized.numInstances());
-
 			normalized = standardize(normalized);
-
-//			System.out.println(normalized.numInstances());
-			
 
 			for (Entry<Query, List<Document>> entry : queryDict.entrySet()) {
 				Query q = entry.getKey();
@@ -248,10 +251,10 @@ public class PairwiseAddedFeatures extends Learner{
 			attributes.add(new Attribute("bm25_w"));
 			attributes.add(new Attribute("window_w"));
 			attributes.add(new Attribute("pagerank_w"));
-			attributes.add(new Attribute("url_rel_w"));
+//			attributes.add(new Attribute("url_rel_w"));
 			attributes.add(new Attribute("isPdf_w"));
 			attributes.add(new Attribute("isTilde_w"));
-			attributes.add(new Attribute("url_length"));
+			attributes.add(new Attribute("title_length"));
 			attributes.add(new Attribute("isID_w"));
 //			attributes.add(new Attribute("isHeaderPresent"));
 			attributes.add(new Attribute("classification", classes));
