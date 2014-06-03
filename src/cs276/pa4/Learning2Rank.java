@@ -45,13 +45,22 @@ public class Learning2Rank {
 		  boolean isLinearKernel = false;
 		  learner = new PairwiseLearner(C, gamma, isLinearKernel);
 		} else if (task == 3) {
-//			 boolean isLinearKernel = true;
-//			 learner = new PairwiseAddedFeatures(isLinearKernel);
+			// boolean isLinearKernel = true;
+			// learner = new PairwiseAddedFeatures(isLinearKernel);
 			double C = 1.0;
 			double gamma = 0.25;
 			boolean isLinearKernel = false;
+			String line;
+			// BufferedReader reader = new BufferedReader(new FileReader("svmtemp.txt"));
+			// try {
+			//   	line = reader.readLine();
+			//   	C = Double.parseDouble(line);
+			//   	line = reader.readLine();
+			//   	gamma = Double.parseDouble(line);
+			//  } catch (Exception e) {
+			//   	System.err.println("Error while getting C and gamma.");
+			//  }
 			learner = new PairwiseAddedFeatures(C, gamma, isLinearKernel);
-			System.err.println("Task 3");
 
 		} else if (task == 4) {
 			
@@ -78,21 +87,15 @@ public class Learning2Rank {
 	 		if (task == 1) {
 				learner = new PointwiseLearner();
 			} else if (task == 2) {
-//			  boolean isLinearKernel = true;
-//				learner = new PairwiseLearner(isLinearKernel);
 				double C = 1.0;
 				double gamma = 0.25;
 				boolean isLinearKernel = false;
 				learner = new PairwiseLearner(C, gamma, isLinearKernel);
 			} else if (task == 3) {
-//				boolean isLinearKernel = true;
-//				learner = new PairwiseAddedFeatures(isLinearKernel);
 				double C = 1.0;
 				double gamma = 0.25;
 				boolean isLinearKernel = false;
 				learner = new PairwiseAddedFeatures(C, gamma, isLinearKernel);
-				System.err.println("Task 3");
-				
 			} else if (task == 4) {
 				
 				/* 
@@ -110,6 +113,7 @@ public class Learning2Rank {
 			
 		    return ranked_queries;
 		}
+	
 	
 
 	/* This function output the ranking results in expected format */
@@ -151,25 +155,25 @@ public class Learning2Rank {
 	      e.printStackTrace();
 	    }
 
-	    System.err.println("Num args: " + args.length);
-	    if (args.length == 7) {
-	    	try {
-	    		File file = new File("svmtemp.txt");
-	    		if (!file.createNewFile()) {
-	    			System.err.println("File already exists.");
-	    			System.exit(1);
-	    		}
-	    		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-	    		writer.write(args[5]);
-	    		writer.newLine();
-	    		writer.write(args[6]);
-	    		writer.newLine();
-	    		writer.close();
-	    	} catch (Exception e) {
-	    		System.err.println("An error occured.");
-	    		System.exit(1);
-	    	}
-	    }
+	    // System.err.println("Num args: " + args.length);
+	    // if (args.length == 7) {
+	    // 	try {
+	    // 		File file = new File("svmtemp.txt");
+	    // 		if (!file.createNewFile()) {
+	    // 			System.err.println("File already exists.");
+	    // 			System.exit(1);
+	    // 		}
+	    // 		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+	    // 		writer.write(args[5]);
+	    // 		writer.newLine();
+	    // 		writer.write(args[6]);
+	    // 		writer.newLine();
+	    // 		writer.close();
+	    // 	} catch (Exception e) {
+	    // 		System.err.println("An error occured.");
+	    // 		System.exit(1);
+	    // 	}
+	    // }
 
 	    
 	    
@@ -208,26 +212,26 @@ public class Learning2Rank {
 	    ndcg = new NdcgMain("data/pa4.rel.dev");
 	    score = ndcg.score(ranked_out_file);
 	    System.err.println("DEV SCORE: " + score);
-	    if (args.length == 7) {
-	    	String filename = "C" + args[5] + "Gamma" + args[6];
-	    	try {
-	    		File file = new File("results/" + filename);
-	    		if (!file.createNewFile()) {
-	    			System.err.println("File already exists.");
-	    			System.exit(1);
-	    		}
-	    		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-	    		writer.write("C: " + args[5]);
-	    		writer.newLine();
-	    		writer.write("Gamma: " + args[6]);
-	    		writer.newLine();
-	    		writer.write("Score: " + score);
-	    		writer.newLine();
-	    		writer.close();
-	    	} catch (Exception e) {
-	    		System.err.println("An error occured.");
-	    		System.exit(1);
-	    	}
-	    }
+	    // if (args.length == 7) {
+	    // 	String filename = "C" + args[5] + "Gamma" + args[6];
+	    // 	try {
+	    // 		File file = new File("results/" + filename);
+	    // 		if (!file.createNewFile()) {
+	    // 			System.err.println("File already exists.");
+	    // 			System.exit(1);
+	    // 		}
+	    // 		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+	    // 		writer.write("C: " + args[5]);
+	    // 		writer.newLine();
+	    // 		writer.write("Gamma: " + args[6]);
+	    // 		writer.newLine();
+	    // 		writer.write("Score: " + score);
+	    // 		writer.newLine();
+	    // 		writer.close();
+	    // 	} catch (Exception e) {
+	    // 		System.err.println("An error occured.");
+	    // 		System.exit(1);
+	    // 	}
+	    // }
 	}
 }
